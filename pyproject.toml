@@ -1,0 +1,65 @@
+[project]
+name = "aioresponses"
+version = "0.7.9"
+description = ""
+authors = [
+    {name = "Pawel Nuckowski", email = "p.nuckowski@gmail.com"},
+]
+readme = "README.rst"
+license = "MIT"
+homepage = "https://github.com/pnuckowski/aioresponses"
+repository = "https://github.com/pnuckowski/aioresponses"
+documentation = "https://github.com/pnuckowski/aioresponses"
+keywords = ["aiohttp", "mock", "testing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Mocking",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14"
+]
+requires-python = ">=3.10,<4"
+dependencies = [
+    "packaging>=22.0",
+    "aiohttp>=3.8.0,<4.0.0"
+]
+
+[tool.poetry]
+packages = [{include = "aioresponses"}]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.1.0",
+    "tox>=4.0.0",
+    "coverage>=7.0.0",
+    "Sphinx>=7.0.0",
+    "pytest>=8.4.0",
+    "pytest-cov>=6.0.0",
+    "pytest-html>=4.0.0",
+    "ddt>=1.4.1",
+    "yarl>=1.9.4"
+]
+
+[tool.ruff]
+line-length = 120
+exclude = ["docs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+    "E501", # formatter will handle this
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
