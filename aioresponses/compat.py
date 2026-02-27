@@ -4,13 +4,9 @@ from typing import Optional, Union
 from urllib.parse import parse_qsl, urlencode
 
 from aiohttp import RequestInfo, StreamReader
-from aiohttp import __version__ as aiohttp_version
 from aiohttp.client_proto import ResponseHandler
 from multidict import MultiDict
-from packaging.version import Version
 from yarl import URL
-
-AIOHTTP_VERSION = Version(aiohttp_version)
 
 
 def stream_reader_factory(  # noqa
@@ -53,7 +49,6 @@ __all__ = [
     "URL",
     "Pattern",
     "RequestInfo",
-    "AIOHTTP_VERSION",
     "merge_params",
     "stream_reader_factory",
     "normalize_url",
