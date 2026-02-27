@@ -22,7 +22,7 @@ def stream_reader_factory(  # noqa
 
 def merge_params(
     url: 'Union[URL, str]',
-    params: Optional[Dict] = None
+    params: dict | None = None
 ) -> 'URL':
     url = URL(url)
     if params:

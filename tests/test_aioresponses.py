@@ -2,7 +2,8 @@ import asyncio
 import re
 from asyncio import CancelledError, TimeoutError
 from random import uniform
-from typing import Coroutine, Generator, Union
+from typing import Union
+from collections.abc import Coroutine, Generator
 from unittest.mock import patch
 
 from aiohttp import hdrs
@@ -41,7 +42,7 @@ class AIOResponsesTestCase(AsyncTestCase):
         if close_result is not None:
             await close_result
 
-    def run_async(self, coroutine: Union[Coroutine, Generator]):
+    def run_async(self, coroutine: Coroutine | Generator):
         return self.loop.run_until_complete(coroutine)
 
     async def request(self, url: str):
@@ -400,8 +401,7 @@ class AIOResponsesTestCase(AsyncTestCase):
     async def test_request_with_non_deepcopyable_parameter(self):
         def non_deep_copyable():
             """A generator does not allow deepcopy."""
-            for line in ["header1,header2", "v1,v2", "v10,v20"]:
-                yield line
+            yield from ["header1,header2", "v1,v2", "v10,v20"]
 
         generator_value = non_deep_copyable()
 
@@ -663,12 +663,12 @@ class AIOResponsesTestCase(AsyncTestCase):
         with aioresponses() as mocked:
             for i in range(20):
                 mocked.get(
-                    'http://example.org/id-{}'.format(i),
+                    f'http://example.org/id-{i}',
                     callback=random_sleep_cb
                 )
 
             tasks = [
-                self.session.get('http://example.org/id-{}'.format(i)) for
+                self.session.get(f'http://example.org/id-{i}') for
                 i in range(20)
             ]
             await asyncio.gather(*tasks)
