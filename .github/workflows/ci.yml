@@ -6,97 +6,65 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  python-major-version: 3
-
 concurrency:
   group: ci-${{ github.ref }}-${{ github.actor }}
   cancel-in-progress: true
 
 jobs:
   build:
-    env:
-      PYTEST_ADDOPTS: "--cov --cov-report=xml"
-
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - python-minor-version: 7
-            aiohttp-version: aiohttp33
-            os: ubuntu-latest
-          - python-minor-version: 7
-            aiohttp-version: aiohttp34
-            os: ubuntu-latest
-          - python-minor-version: 7
-            aiohttp-version: aiohttp35
-            os: ubuntu-latest
-          - python-minor-version: 7
-            aiohttp-version: aiohttp36
-            os: ubuntu-latest
-          - python-minor-version: 7
-            aiohttp-version: aiohttp37
-            os: ubuntu-latest
-          - python-minor-version: 7
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        aiohttp-version: ["aiohttp38", "aiohttp39", "aiohttp310", "aiohttp311", "aiohttp312", "aiohttp313"]
+        exclude:
+          - python-version: "3.10"
+            aiohttp-version: aiohttp312
+          - python-version: "3.10"
+            aiohttp-version: aiohttp313
+          - python-version: "3.11"
+            aiohttp-version: aiohttp313
+          - python-version: "3.12"
             aiohttp-version: aiohttp38
-            os: ubuntu-latest
+          - python-version: "3.13"
+            aiohttp-version: aiohttp38
+          - python-version: "3.13"
+            aiohttp-version: aiohttp39
+          - python-version: "3.14"
+            aiohttp-version: aiohttp38
+          - python-version: "3.14"
+            aiohttp-version: aiohttp39
+          - python-version: "3.14"
+            aiohttp-version: aiohttp310
+          - python-version: "3.14"
+            aiohttp-version: aiohttp311
+          - python-version: "3.14"
+            aiohttp-version: aiohttp312
 
-          - python-minor-version: 8
-            aiohttp-version: aiohttp33
-            os: ubuntu-latest
-          - python-minor-version: 8
-            aiohttp-version: aiohttp34
-            os: ubuntu-latest
-          - python-minor-version: 8
-            aiohttp-version: aiohttp35
-            os: ubuntu-latest
-          - python-minor-version: 8
-            aiohttp-version: aiohttp36
-            os: ubuntu-latest
-          - python-minor-version: 8
-            aiohttp-version: aiohttp37
-            os: ubuntu-latest
-          - python-minor-version: 8
-            aiohttp-version: aiohttp38
-            os: ubuntu-latest
-
-          - python-minor-version: 9
-            aiohttp-version: aiohttp35
-            os: ubuntu-latest
-          - python-minor-version: 9
-            aiohttp-version: aiohttp36
-            os: ubuntu-latest
-          - python-minor-version: 9
-            aiohttp-version: aiohttp37
-            os: ubuntu-latest
-          - python-minor-version: 9
-            aiohttp-version: aiohttp38
-            os: ubuntu-latest
-
-          - python-minor-version: 10
-            aiohttp-version: aiohttp37
-            os: ubuntu-latest
-          - python-minor-version: 10
-            aiohttp-version: aiohttp38
-            os: ubuntu-latest
-
-          - python-minor-version: 11
-            aiohttp-version: aiohttp38
-            os: ubuntu-latest
-    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ env.python-major-version }}.${{ matrix.python-minor-version }}
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ env.python-major-version }}.${{ matrix.python-minor-version }}
-    - name: Install Dependencies
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install poetry
       run: |
         python -m pip install --upgrade pip
-        pip install tox
-    - name: Run Tests
+        python -m pip install poetry
+
+    - name: Install dependencies
       run: |
-        tox -e py${{ env.python-major-version }}${{ matrix.python-version }}-${{ matrix.aiohttp-version }}
-    - uses: codecov/codecov-action@v2
+        poetry install --with dev
+
+    - name: Run tests with tox
+      run: |
+        poetry run tox -e py${{ matrix.python-version }}-${{ matrix.aiohttp-version }}
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         file: coverage.xml
+        fail_ci_if_error: false
