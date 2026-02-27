@@ -27,7 +27,6 @@ from aiohttp import (
 )
 from aiohttp.helpers import TimerNoop
 from multidict import CIMultiDict, CIMultiDictProxy
-from packaging.version import Version
 
 from .compat import (
     URL,
@@ -35,7 +34,7 @@ from .compat import (
     stream_reader_factory,
     merge_params,
     normalize_url,
-    RequestInfo, AIOHTTP_VERSION,
+    RequestInfo,
 )
 
 _FuncT = TypeVar("_FuncT", bound=Callable[..., Any])
@@ -503,15 +502,12 @@ class aioresponses:
         if orig_self.closed:
             raise RuntimeError('Session is closed')
 
-        if AIOHTTP_VERSION >= Version('3.8.0'):
-            # Join url with ClientSession._base_url
-            url = orig_self._build_url(url)
-            url_origin = str(url)
-            # Combine ClientSession headers with passed headers
-            if orig_self.headers:
-                kwargs["headers"] = orig_self._prepare_headers(kwargs.get("headers"))
-        else:
-            url_origin = url
+        # Join url with ClientSession._base_url
+        url = orig_self._build_url(url)
+        url_origin = str(url)
+        # Combine ClientSession headers with passed headers
+        if orig_self.headers:
+            kwargs["headers"] = orig_self._prepare_headers(kwargs.get("headers"))
 
         url = normalize_url(merge_params(url, kwargs.get('params')))
         url_str = str(url)
