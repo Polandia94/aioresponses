@@ -1,6 +1,6 @@
 import asyncio
 from re import Pattern
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 from urllib.parse import parse_qsl, urlencode
 
 from aiohttp import RequestInfo, StreamReader

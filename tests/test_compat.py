@@ -1,4 +1,3 @@
-from typing import Union
 from unittest import TestCase
 
 from ddt import data, ddt

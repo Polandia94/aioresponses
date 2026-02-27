@@ -1,9 +1,8 @@
 import asyncio
 import re
 from asyncio import CancelledError, TimeoutError
-from random import uniform
-from typing import Union
 from collections.abc import Coroutine, Generator
+from random import uniform
 from unittest.mock import patch
 
 from aiohttp import hdrs, http
