@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-from typing import Union
 from unittest import TestCase
 
 from ddt import data, ddt
@@ -8,7 +6,7 @@ from yarl import URL
 from aioresponses.compat import merge_params
 
 
-def get_url(url: str, as_str: bool) -> Union[URL, str]:
+def get_url(url: str, as_str: bool) -> URL | str:
     return url if as_str else URL(url)
 
 

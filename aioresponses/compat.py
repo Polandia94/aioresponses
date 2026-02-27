@@ -1,6 +1,6 @@
 import asyncio
 from re import Pattern
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 from urllib.parse import parse_qsl, urlencode
 
 from aiohttp import RequestInfo, StreamReader
@@ -20,7 +20,7 @@ def stream_reader_factory(  # noqa
     return StreamReader(protocol, limit=2**16, loop=loop)
 
 
-def merge_params(url: "Union[URL, str]", params: Optional[Dict] = None) -> "URL":
+def merge_params(url: "Union[URL, str]", params: dict | None = None) -> "URL":
     url = URL(url)
     if params:
         query_params = MultiDict(url.query)
@@ -39,10 +39,10 @@ try:
     from aiohttp import RequestInfo
 except ImportError:
 
-    class RequestInfo(object):
+    class RequestInfo:
         __slots__ = ("url", "method", "headers", "real_url")
 
-        def __init__(self, url: URL, method: str, headers: Dict, real_url: str):
+        def __init__(self, url: URL, method: str, headers: dict, real_url: str):
             self.url = url
             self.method = method
             self.headers = headers
