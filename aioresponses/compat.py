@@ -1,19 +1,14 @@
-# -*- coding: utf-8 -*-
-import asyncio  # noqa: F401
-import sys
-from typing import Dict, Optional, Union  # noqa
+import asyncio
+from re import Pattern
+from typing import Dict, Optional, Union
 from urllib.parse import parse_qsl, urlencode
 
-from aiohttp import __version__ as aiohttp_version, StreamReader
+from aiohttp import RequestInfo, StreamReader
+from aiohttp import __version__ as aiohttp_version
 from aiohttp.client_proto import ResponseHandler
 from multidict import MultiDict
 from packaging.version import Version
 from yarl import URL
-
-if sys.version_info < (3, 7):
-    from re import _pattern_type as Pattern
-else:
-    from re import Pattern
 
 AIOHTTP_VERSION = Version(aiohttp_version)
 
@@ -42,20 +37,6 @@ def normalize_url(url: 'Union[URL, str]') -> 'URL':
     url = URL(url)
     return url.with_query(urlencode(sorted(parse_qsl(url.query_string))))
 
-
-try:
-    from aiohttp import RequestInfo
-except ImportError:
-    class RequestInfo(object):
-        __slots__ = ('url', 'method', 'headers', 'real_url')
-
-        def __init__(
-            self, url: URL, method: str, headers: Dict, real_url: str
-        ):
-            self.url = url
-            self.method = method
-            self.headers = headers
-            self.real_url = real_url
 
 __all__ = [
     'URL',
