@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import asyncio
 import re
 from asyncio import CancelledError, TimeoutError
@@ -10,7 +9,6 @@ from aiohttp import hdrs, http
 from aiohttp.client import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 from ddt import data, ddt, unpack
-from packaging.version import Version
 
 try:
     from aiohttp.errors import (
@@ -26,11 +24,9 @@ except ImportError:
     from aiohttp.http_exceptions import HttpProcessingError
 
 from aioresponses import CallbackResult, aioresponses
-from aioresponses.compat import AIOHTTP_VERSION, URL
+from aioresponses.compat import URL
 
-from .base import AsyncTestCase, fail_on, skipIf
-
-MINIMUM_AIOHTTP_VERSION = Version("3.4.0")
+from .base import AsyncTestCase, fail_on
 
 
 @ddt
@@ -82,7 +78,6 @@ class AIOResponsesTestCase(AsyncTestCase):
     @unpack
     @data(("http://example.com", "/api?foo=bar#fragment"), ("http://example.com/", "/api?foo=bar#fragment"))
     @aioresponses()
-    @skipIf(condition=AIOHTTP_VERSION < Version("3.8.0"), reason="aiohttp must be >= 3.8.0")
     async def test_base_url(self, base_url, relative_url, m):
         m.get(self.url, status=200)
         self.session = ClientSession(base_url=base_url)
@@ -90,7 +85,6 @@ class AIOResponsesTestCase(AsyncTestCase):
         self.assertEqual(response.status, 200)
 
     @aioresponses()
-    @skipIf(condition=AIOHTTP_VERSION < Version("3.8.0"), reason="aiohttp must be >= 3.8.0")
     async def test_session_headers(self, m):
         m.get(self.url)
         self.session = ClientSession(headers={"Authorization": "Bearer foobar"})
@@ -135,10 +129,6 @@ class AIOResponsesTestCase(AsyncTestCase):
         self.assertEqual(cm.exception.message, http.RESPONSES[400][0])
 
     @aioresponses()
-    @skipIf(
-        condition=AIOHTTP_VERSION < MINIMUM_AIOHTTP_VERSION,
-        reason="aiohttp<3.4.0 does not support raise_for_status arguments for requests",
-    )
     async def test_request_raise_for_status(self, m):
         m.get(self.url, status=400)
         with self.assertRaises(ClientResponseError) as cm:
@@ -652,10 +642,6 @@ class AIOResponsesRaiseForStatusSessionTestCase(AsyncTestCase):
         self.assertEqual(cm.exception.message, http.RESPONSES[400][0])
 
     @aioresponses()
-    @skipIf(
-        condition=AIOHTTP_VERSION < MINIMUM_AIOHTTP_VERSION,
-        reason="aiohttp<3.4.0 does not support raise_for_status arguments for requests",
-    )
     async def test_do_not_raise_for_status(self, m):
         m.get(self.url, status=400)
         response = await self.session.get(self.url, raise_for_status=False)
@@ -663,10 +649,6 @@ class AIOResponsesRaiseForStatusSessionTestCase(AsyncTestCase):
         self.assertEqual(response.status, 400)
 
     @aioresponses()
-    @skipIf(
-        condition=AIOHTTP_VERSION < Version("3.9.0"),
-        reason="aiohttp<3.9.0 does not support callable raise_for_status arguments for requests",
-    )
     async def test_callable_raise_for_status(self, m):
         async def raise_for_status(response: ClientResponse):
             if response.status >= 400:

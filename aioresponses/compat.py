@@ -1,20 +1,14 @@
-# -*- coding: utf-8 -*-
-import asyncio  # noqa: F401
-import sys
-from typing import Dict, Optional, Union  # noqa
+import asyncio
+from re import Pattern
+from typing import Dict, Optional, Union
 from urllib.parse import parse_qsl, urlencode
 
-from aiohttp import StreamReader
+from aiohttp import RequestInfo, StreamReader
 from aiohttp import __version__ as aiohttp_version
 from aiohttp.client_proto import ResponseHandler
 from multidict import MultiDict
 from packaging.version import Version
 from yarl import URL
-
-if sys.version_info < (3, 7):
-    from re import _pattern_type as Pattern
-else:
-    from re import Pattern
 
 AIOHTTP_VERSION = Version(aiohttp_version)
 
