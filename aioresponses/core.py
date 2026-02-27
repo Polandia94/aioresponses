@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import asyncio
 import copy
 import inspect
@@ -7,7 +6,6 @@ from collections import namedtuple
 from functools import wraps
 from typing import (
     Any,
-    Callable,
     Dict,
     List,
     Optional,
@@ -17,6 +15,7 @@ from typing import (
     Union,
     cast,
 )
+from collections.abc import Callable
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
@@ -43,12 +42,12 @@ class CallbackResult:
         self,
         method: str = hdrs.METH_GET,
         status: int = 200,
-        body: Union[str, bytes] = "",
+        body: str | bytes = "",
         content_type: str = "application/json",
-        payload: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-        response_class: Optional[Type[ClientResponse]] = None,
-        reason: Optional[str] = None,
+        payload: dict | None = None,
+        headers: dict | None = None,
+        response_class: type[ClientResponse] | None = None,
+        reason: str | None = None,
     ):
         self.method = method
         self.status = status
@@ -60,24 +59,24 @@ class CallbackResult:
         self.reason = reason
 
 
-class RequestMatch(object):
+class RequestMatch:
     url_or_pattern = None  # type: Union[URL, Pattern]
 
     def __init__(
         self,
-        url: Union[URL, str, Pattern],
+        url: URL | str | Pattern,
         method: str = hdrs.METH_GET,
         status: int = 200,
-        body: Union[str, bytes] = "",
-        payload: Optional[Dict] = None,
-        exception: Optional[Exception] = None,
-        headers: Optional[Dict] = None,
+        body: str | bytes = "",
+        payload: dict | None = None,
+        exception: Exception | None = None,
+        headers: dict | None = None,
         content_type: str = "application/json",
-        response_class: Optional[Type[ClientResponse]] = None,
+        response_class: type[ClientResponse] | None = None,
         timeout: bool = False,
-        repeat: Union[bool, int] = False,
-        reason: Optional[str] = None,
-        callback: Optional[Callable] = None,
+        repeat: bool | int = False,
+        reason: str | None = None,
+        callback: Callable | None = None,
     ):
         if isinstance(url, Pattern):
             self.url_or_pattern = url
@@ -118,7 +117,7 @@ class RequestMatch(object):
             return False
         return self.match_func(url)
 
-    def _build_raw_headers(self, headers: Dict) -> Tuple:
+    def _build_raw_headers(self, headers: dict) -> tuple:
         """
         Convert a dict of headers to a tuple of tuples
 
@@ -133,14 +132,14 @@ class RequestMatch(object):
         self,
         url: "Union[URL, str]",
         method: str = hdrs.METH_GET,
-        request_headers: Optional[Dict] = None,
+        request_headers: dict | None = None,
         status: int = 200,
-        body: Union[str, bytes] = "",
+        body: str | bytes = "",
         content_type: str = "application/json",
-        payload: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-        response_class: Optional[Type[ClientResponse]] = None,
-        reason: Optional[str] = None,
+        payload: dict | None = None,
+        headers: dict | None = None,
+        response_class: type[ClientResponse] | None = None,
+        reason: str | None = None,
     ) -> ClientResponse:
         if response_class is None:
             response_class = ClientResponse
@@ -219,11 +218,11 @@ class RequestMatch(object):
 RequestCall = namedtuple("RequestCall", ["args", "kwargs"])
 
 
-class aioresponses(object):
+class aioresponses:
     """Mock aiohttp requests made by ClientSession."""
 
     _matches = None  # type: Dict[str, RequestMatch]
-    _responses: List[ClientResponse] = None
+    _responses: list[ClientResponse] = None
     requests = None  # type: Dict
 
     def __init__(self, **kwargs: Any):
@@ -241,7 +240,7 @@ class aioresponses(object):
         self.stop()
 
     def __call__(self, f: _FuncT) -> _FuncT:
-        def _pack_arguments(ctx, *args, **kwargs) -> Tuple[Tuple, Dict]:
+        def _pack_arguments(ctx, *args, **kwargs) -> tuple[tuple, dict]:
             if self._param:
                 kwargs[self._param] = ctx
             else:
@@ -307,16 +306,16 @@ class aioresponses(object):
         url: "Union[URL, str, Pattern]",
         method: str = hdrs.METH_GET,
         status: int = 200,
-        body: Union[str, bytes] = "",
-        exception: Optional[Exception] = None,
+        body: str | bytes = "",
+        exception: Exception | None = None,
         content_type: str = "application/json",
-        payload: Optional[Dict] = None,
-        headers: Optional[Dict] = None,
-        response_class: Optional[Type[ClientResponse]] = None,
-        repeat: Union[bool, int] = False,
+        payload: dict | None = None,
+        headers: dict | None = None,
+        response_class: type[ClientResponse] | None = None,
+        repeat: bool | int = False,
         timeout: bool = False,
-        reason: Optional[str] = None,
-        callback: Optional[Callable] = None,
+        reason: str | None = None,
+        callback: Callable | None = None,
     ) -> None:
         self._matches[str(uuid4())] = RequestMatch(
             url,
@@ -338,7 +337,7 @@ class aioresponses(object):
         message = "%s(%%s)" % self.__class__.__name__ or "mock"
         formatted_args = ""
         args_string = ", ".join([repr(arg) for arg in args])
-        kwargs_string = ", ".join(["%s=%r" % (key, value) for key, value in kwargs.items()])
+        kwargs_string = ", ".join(["{}={!r}".format(key, value) for key, value in kwargs.items()])
         if args_string:
             formatted_args = args_string
         if kwargs_string:
@@ -351,7 +350,7 @@ class aioresponses(object):
     def assert_not_called(self):
         """assert that the mock was never called."""
         if len(self.requests) != 0:
-            msg = "Expected '%s' to not have been called. Called %s times." % (
+            msg = "Expected '{}' to not have been called. Called {} times.".format(
                 self.__class__.__name__,
                 len(self._responses),
             )
@@ -360,7 +359,7 @@ class aioresponses(object):
     def assert_called(self):
         """assert that the mock was called at least once."""
         if len(self.requests) == 0:
-            msg = "Expected '%s' to have been called." % (self.__class__.__name__,)
+            msg = "Expected '{}' to have been called.".format(self.__class__.__name__)
             raise AssertionError(msg)
 
     def assert_called_once(self):
@@ -369,7 +368,7 @@ class aioresponses(object):
         if call_count == 1:
             call_count = len(list(self.requests.values())[0])
         if not call_count == 1:
-            msg = "Expected '%s' to have been called once. Called %s times." % (self.__class__.__name__, call_count)
+            msg = "Expected '{}' to have been called once. Called {} times.".format(self.__class__.__name__, call_count)
 
             raise AssertionError(msg)
 
@@ -394,7 +393,7 @@ class aioresponses(object):
                 expected,
             )
             actual_string = self._format_call_signature(actual)
-            raise AssertionError("%s != %s" % (expected_string, actual_string))
+            raise AssertionError("{} != {}".format(expected_string, actual_string))
 
     def assert_any_call(self, url: "Union[URL, str, Pattern]", method: str = hdrs.METH_GET, *args: Any, **kwargs: Any):
         """assert the mock has been called with the specified arguments.
@@ -419,7 +418,7 @@ class aioresponses(object):
         self.assert_called_with(*args, **kwargs)
 
     @staticmethod
-    def is_exception(resp_or_exc: Union[ClientResponse, Exception]) -> bool:
+    def is_exception(resp_or_exc: ClientResponse | Exception) -> bool:
         if inspect.isclass(resp_or_exc):
             parent_classes = set(inspect.getmro(resp_or_exc))
             if {Exception, BaseException} & parent_classes:
@@ -474,7 +473,7 @@ class aioresponses(object):
         return response
 
     async def _request_mock(
-        self, orig_self: ClientSession, method: str, url: "Union[URL, str]", *args: Tuple, **kwargs: Any
+        self, orig_self: ClientSession, method: str, url: "Union[URL, str]", *args: tuple, **kwargs: Any
     ) -> "ClientResponse":
         """Return mocked response object or raise connection error."""
         if orig_self.closed:
@@ -506,7 +505,7 @@ class aioresponses(object):
         if response is None:
             if self.passthrough_unmatched:
                 return await self.patcher.temp_original(orig_self, method, url_origin, *args, **kwargs)
-            raise ClientConnectionError("Connection refused: {} {}".format(method, url))
+            raise ClientConnectionError(f"Connection refused: {method} {url}")
         self._responses.append(response)
 
         # Automatically call response.raise_for_status() on a request if the
