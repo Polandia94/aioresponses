@@ -1,5 +1,4 @@
 import asyncio
-from typing import Union
 from urllib.parse import parse_qsl, urlencode
 
 from aiohttp import StreamReader
@@ -15,7 +14,7 @@ def stream_reader_factory(
     return StreamReader(protocol, limit=2**16, loop=loop)
 
 
-def merge_params(url: "Union[URL, str]", params: dict | None = None) -> "URL":
+def merge_params(url: URL | str, params: dict | None = None) -> URL:
     url = URL(url)
     if params:
         query_params = MultiDict(url.query)
@@ -24,7 +23,7 @@ def merge_params(url: "Union[URL, str]", params: dict | None = None) -> "URL":
     return url
 
 
-def normalize_url(url: "Union[URL, str]") -> "URL":
+def normalize_url(url: URL | str) -> URL:
     """Normalize url to make comparisons."""
     url = URL(url)
     return url.with_query(urlencode(sorted(parse_qsl(url.query_string))))
