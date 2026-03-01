@@ -9,6 +9,7 @@ from aiohttp import hdrs, http
 from aiohttp.client import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 from ddt import data, ddt, unpack
+from yarl import URL
 
 try:
     from aiohttp.errors import (
@@ -24,7 +25,6 @@ except ImportError:
     from aiohttp.http_exceptions import HttpProcessingError
 
 from aioresponses import CallbackResult, aioresponses
-from aioresponses.compat import URL
 
 from .base import AsyncTestCase, fail_on
 

@@ -1,5 +1,4 @@
 import asyncio
-from re import Pattern
 from typing import Union
 from urllib.parse import parse_qsl, urlencode
 
@@ -32,8 +31,6 @@ def normalize_url(url: "Union[URL, str]") -> "URL":
 
 
 __all__ = [
-    "URL",
-    "Pattern",
     "merge_params",
     "stream_reader_factory",
     "normalize_url",

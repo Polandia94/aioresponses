@@ -5,6 +5,7 @@ import json
 from collections import namedtuple
 from collections.abc import Callable
 from functools import wraps
+from re import Pattern
 from typing import (
     Any,
     Mapping,
@@ -19,10 +20,9 @@ from uuid import uuid4
 from aiohttp import ClientConnectionError, ClientResponse, ClientSession, RequestInfo, hdrs, http
 from aiohttp.helpers import TimerNoop
 from multidict import CIMultiDict, CIMultiDictProxy
+from yarl import URL
 
 from .compat import (
-    URL,
-    Pattern,
     merge_params,
     normalize_url,
     stream_reader_factory,
