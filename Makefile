@@ -48,7 +48,8 @@ clean-test: ## remove test and coverage artifacts
 	rm -f .coverage
 	rm -fr htmlcov/
 
-lint: ## check style with ruff
+lint: ## check style with ruff and mypy
+	poetry run mypy aioresponses
 	poetry run ruff format aioresponses tests
 	poetry run ruff check aioresponses tests
 
