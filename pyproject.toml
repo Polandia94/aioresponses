@@ -46,7 +46,8 @@ dev = [
     "pytest-cov>=6.0.0",
     "pytest-html>=4.0.0",
     "ddt>=1.4.1",
-    "yarl>=1.9.4"
+    "yarl>=1.9.4",
+    "mypy (>=1.19.1,<2.0.0)"
 ]
 
 [tool.ruff]

@@ -7,6 +7,7 @@ from collections.abc import Callable
 from functools import wraps
 from typing import (
     Any,
+    Mapping,
     Optional,
     TypeVar,
     Union,
@@ -15,14 +16,13 @@ from typing import (
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
-from aiohttp import ClientConnectionError, ClientResponse, ClientSession, hdrs, http
+from aiohttp import ClientConnectionError, ClientResponse, ClientSession, RequestInfo, hdrs, http
 from aiohttp.helpers import TimerNoop
 from multidict import CIMultiDict, CIMultiDictProxy
 
 from .compat import (
     URL,
     Pattern,
-    RequestInfo,
     merge_params,
     normalize_url,
     stream_reader_factory,
@@ -111,7 +111,7 @@ class RequestMatch:
             return False
         return self.match_func(url)
 
-    def _build_raw_headers(self, headers: dict) -> tuple:
+    def _build_raw_headers(self, headers: Mapping[str, str]) -> tuple:
         """
         Convert a dict of headers to a tuple of tuples
 
@@ -124,7 +124,7 @@ class RequestMatch:
 
     def _build_response(
         self,
-        url: "Union[URL, str]",
+        url: URL,
         method: str = hdrs.METH_GET,
         request_headers: dict | None = None,
         status: int = 200,
@@ -146,7 +146,7 @@ class RequestMatch:
         loop = Mock()
         loop.get_debug = Mock()
         loop.get_debug.return_value = True
-        kwargs = {}  # type: Dict[str, Any]
+        kwargs: dict[str, Any] = {}
         kwargs["request_info"] = RequestInfo(
             url=url, method=method, headers=CIMultiDictProxy(CIMultiDict(**request_headers)), real_url=url
         )
@@ -168,7 +168,7 @@ class RequestMatch:
             resp.cookies.load(hdr)
 
         # Reified attributes
-        resp._headers = _headers
+        resp._headers = CIMultiDictProxy(_headers)
         resp._raw_headers = raw_headers
 
         resp.status = status
@@ -215,9 +215,9 @@ RequestCall = namedtuple("RequestCall", ["args", "kwargs"])
 class aioresponses:
     """Mock aiohttp requests made by ClientSession."""
 
-    _matches = None  # type: Dict[str, RequestMatch]
-    _responses: list[ClientResponse] = None
-    requests = None  # type: Dict
+    _matches: dict[str, RequestMatch]
+    _responses: list[ClientResponse]
+    requests: dict[tuple[str, URL], list[RequestCall]]
 
     def __init__(self, **kwargs: Any):
         self._param = kwargs.pop("param", None)
@@ -225,6 +225,7 @@ class aioresponses:
         self.passthrough_unmatched = kwargs.pop("passthrough_unmatched", False)
         self.patcher = patch("aiohttp.client.ClientSession._request", side_effect=self._request_mock, autospec=True)
         self.requests = {}
+        self._started = False
 
     def __enter__(self) -> "aioresponses":
         self.start()
@@ -266,13 +267,17 @@ class aioresponses:
         self._responses = []
         self._matches = {}
         self.patcher.start()
-        self.patcher.return_value = self._request_mock
+        self.patcher.return_value = self._request_mock  # type: ignore[attr-defined]
+        self._started = True
 
     def stop(self) -> None:
+        if not self._started:
+            raise RuntimeError("aioresponses is not started")
         for response in self._responses:
             response.close()
         self.patcher.stop()
         self.clear()
+        self._started = False
 
     def head(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_HEAD, **kwargs)
@@ -373,7 +378,7 @@ class aioresponses:
 
         Raises an AssertionError if the args and keyword args passed in are
         different to the last call to the mock."""
-        url = normalize_url(merge_params(url, kwargs.get("params")))
+        url = normalize_url(merge_params(url, kwargs.get("params")))  # type: ignore[arg-type]
         method = method.upper()
         key = (method, url)
         try:
@@ -394,7 +399,7 @@ class aioresponses:
         The assert passes if the mock has *ever* been called, unlike
         `assert_called_with` and `assert_called_once_with` that only pass if
         the call is the most recent one."""
-        url = normalize_url(merge_params(url, kwargs.get("params")))
+        url = normalize_url(merge_params(url, kwargs.get("params")))  # type: ignore[arg-type]
         method = method.upper()
         key = (method, url)
 
@@ -410,17 +415,6 @@ class aioresponses:
         different to the only call to the mock."""
         self.assert_called_once()
         self.assert_called_with(*args, **kwargs)
-
-    @staticmethod
-    def is_exception(resp_or_exc: ClientResponse | Exception) -> bool:
-        if inspect.isclass(resp_or_exc):
-            parent_classes = set(inspect.getmro(resp_or_exc))
-            if {Exception, BaseException} & parent_classes:
-                return True
-        else:
-            if isinstance(resp_or_exc, (Exception, BaseException)):
-                return True
-        return False
 
     async def match(
         self, method: str, url: URL, allow_redirects: bool = True, **kwargs: Any
@@ -442,12 +436,14 @@ class aioresponses:
                     del self._matches[key]
                 matcher.repeat -= 1
 
-            if self.is_exception(response_or_exc):
+            if isinstance(response_or_exc, BaseException) or (
+                inspect.isclass(response_or_exc) and issubclass(response_or_exc, BaseException)
+            ):
                 raise response_or_exc
             # If response_or_exc was an exception, it would have been raised.
             # At this point we can be sure it's a ClientResponse
             response: ClientResponse
-            response = response_or_exc  # type:ignore[assignment]
+            response = response_or_exc
             is_redirect = response.status in (301, 302, 303, 307, 308)
             if is_redirect and allow_redirects:
                 if hdrs.LOCATION not in response.headers:
