@@ -25,7 +25,8 @@ from aiohttp import (
     ClientResponse,
     ClientSession,
     hdrs,
-    http
+    http,
+    RequestInfo,
 )
 from aiohttp.helpers import TimerNoop
 from multidict import CIMultiDict, CIMultiDictProxy
@@ -37,7 +38,7 @@ from .compat import (
     stream_reader_factory,
     merge_params,
     normalize_url,
-    RequestInfo, AIOHTTP_VERSION,
+    AIOHTTP_VERSION,
 )
 
 _FuncT = TypeVar("_FuncT", bound=Callable[..., Any])
