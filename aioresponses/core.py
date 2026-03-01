@@ -180,7 +180,7 @@ class RequestMatch:
 
     async def build_response(self, url: URL, **kwargs: Any) -> "Union[ClientResponse, Exception]":
         if callable(self.callback):
-            if asyncio.iscoroutinefunction(self.callback):
+            if inspect.iscoroutinefunction(self.callback):
                 result = await self.callback(url, **kwargs)
             else:
                 result = self.callback(url, **kwargs)
@@ -241,7 +241,7 @@ class aioresponses:
                 args += (ctx,)
             return args, kwargs
 
-        if asyncio.iscoroutinefunction(f):
+        if inspect.iscoroutinefunction(f):
 
             @wraps(f)
             async def wrapped(*args, **kwargs):
