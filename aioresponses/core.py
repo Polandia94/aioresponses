@@ -9,9 +9,7 @@ from re import Pattern
 from typing import (
     Any,
     Mapping,
-    Optional,
     TypeVar,
-    Union,
     cast,
 )
 from unittest.mock import Mock, patch
@@ -54,7 +52,7 @@ class CallbackResult:
 
 
 class RequestMatch:
-    url_or_pattern = None  # type: Union[URL, Pattern]
+    url_or_pattern: URL | Pattern
 
     def __init__(
         self,
@@ -178,7 +176,7 @@ class RequestMatch:
         resp.content.feed_eof()
         return resp
 
-    async def build_response(self, url: URL, **kwargs: Any) -> "Union[ClientResponse, Exception]":
+    async def build_response(self, url: URL, **kwargs: Any) -> ClientResponse | Exception:
         if callable(self.callback):
             if inspect.iscoroutinefunction(self.callback):
                 result = await self.callback(url, **kwargs)
@@ -279,30 +277,30 @@ class aioresponses:
         self.clear()
         self._started = False
 
-    def head(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def head(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_HEAD, **kwargs)
 
-    def get(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def get(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_GET, **kwargs)
 
-    def post(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def post(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_POST, **kwargs)
 
-    def put(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def put(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_PUT, **kwargs)
 
-    def patch(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def patch(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_PATCH, **kwargs)
 
-    def delete(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def delete(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_DELETE, **kwargs)
 
-    def options(self, url: "Union[URL, str, Pattern]", **kwargs: Any) -> None:
+    def options(self, url: URL | str | Pattern, **kwargs: Any) -> None:
         self.add(url, method=hdrs.METH_OPTIONS, **kwargs)
 
     def add(
         self,
-        url: "Union[URL, str, Pattern]",
+        url: URL | str | Pattern,
         method: str = hdrs.METH_GET,
         status: int = 200,
         body: str | bytes = "",
@@ -371,9 +369,7 @@ class aioresponses:
 
             raise AssertionError(msg)
 
-    def assert_called_with(
-        self, url: "Union[URL, str, Pattern]", method: str = hdrs.METH_GET, *args: Any, **kwargs: Any
-    ):
+    def assert_called_with(self, url: URL | str | Pattern, method: str = hdrs.METH_GET, *args: Any, **kwargs: Any):
         """assert that the last call was made with the specified arguments.
 
         Raises an AssertionError if the args and keyword args passed in are
@@ -394,7 +390,7 @@ class aioresponses:
             actual_string = self._format_call_signature(actual)
             raise AssertionError("{} != {}".format(expected_string, actual_string))
 
-    def assert_any_call(self, url: "Union[URL, str, Pattern]", method: str = hdrs.METH_GET, *args: Any, **kwargs: Any):
+    def assert_any_call(self, url: URL | str | Pattern, method: str = hdrs.METH_GET, *args: Any, **kwargs: Any):
         """assert the mock has been called with the specified arguments.
         The assert passes if the mock has *ever* been called, unlike
         `assert_called_with` and `assert_called_once_with` that only pass if
@@ -416,9 +412,7 @@ class aioresponses:
         self.assert_called_once()
         self.assert_called_with(*args, **kwargs)
 
-    async def match(
-        self, method: str, url: URL, allow_redirects: bool = True, **kwargs: Any
-    ) -> Optional["ClientResponse"]:
+    async def match(self, method: str, url: URL, allow_redirects: bool = True, **kwargs: Any) -> ClientResponse | None:
         history = []
         while True:
             for key, matcher in self._matches.items():
@@ -463,8 +457,8 @@ class aioresponses:
         return response
 
     async def _request_mock(
-        self, orig_self: ClientSession, method: str, url: "Union[URL, str]", *args: tuple, **kwargs: Any
-    ) -> "ClientResponse":
+        self, orig_self: ClientSession, method: str, url: URL | str, *args: tuple, **kwargs: Any
+    ) -> ClientResponse:
         """Return mocked response object or raise connection error."""
         if orig_self.closed:
             raise RuntimeError("Session is closed")
