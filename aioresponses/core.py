@@ -476,12 +476,13 @@ class aioresponses:
             if url_str.startswith(prefix):
                 return await self.patcher.temp_original(orig_self, method, url_origin, *args, **kwargs)
 
-        key = (method, url)
+        method_upper = method.upper()
+        key = (method_upper, url)
         self.requests.setdefault(key, [])
-        request_call = self._build_request_call(method, *args, **kwargs)
+        request_call = self._build_request_call(method_upper, *args, **kwargs)
         self.requests[key].append(request_call)
 
-        response = await self.match(method, url, **kwargs)
+        response = await self.match(method_upper, url, **kwargs)
 
         if response is None:
             if self.passthrough_unmatched:

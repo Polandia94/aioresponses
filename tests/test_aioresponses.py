@@ -159,6 +159,14 @@ class AIOResponsesTestCase(AsyncTestCase):
             self.run_async(self.session.post(self.url))
 
     @aioresponses()
+    async def test_method_match_case_insensitive(self, m):
+        m.get(self.url)
+        response = await self.session.request("get", self.url)
+        self.assertEqual(response.status, 200)
+        m.assert_any_call(self.url)
+        m.assert_called_with(self.url)
+
+    @aioresponses()
     def test_post_with_data(self, m: aioresponses):
         body = {"foo": "bar"}
         payload = {"spam": "eggs"}
