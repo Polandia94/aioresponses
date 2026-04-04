@@ -440,15 +440,17 @@ class aioresponses:
             response = response_or_exc
             is_redirect = response.status in (301, 302, 303, 307, 308)
             if is_redirect and allow_redirects:
-                if hdrs.LOCATION not in response.headers:
+                if hdrs.LOCATION not in response.headers and hdrs.URI not in response.headers:
                     break
                 history.append(response)
-                redirect_url = URL(response.headers[hdrs.LOCATION])
+                r_url = response.headers.get(hdrs.LOCATION) or response.headers[hdrs.URI]
+                redirect_url = URL(r_url)
                 if redirect_url.is_absolute():
                     url = redirect_url
                 else:
                     url = url.join(redirect_url)
-                method = "get"
+                if (response.status == 303 and response.method != hdrs.METH_HEAD) or (response.status in (301, 302) and method == hdrs.METH_POST):
+                    method = hdrs.METH_GET
                 continue
             else:
                 break

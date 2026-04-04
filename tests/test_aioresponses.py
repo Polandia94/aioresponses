@@ -695,7 +695,7 @@ class AIOResponseRedirectTest(AsyncTestCase):
     async def test_post_redirect_followed(self, rsps):
         rsps.post(
             self.url,
-            status=307,
+            status=303,
             headers={"Location": "https://httpbin.org"},
         )
         rsps.get("https://httpbin.org")
@@ -703,6 +703,21 @@ class AIOResponseRedirectTest(AsyncTestCase):
         self.assertEqual(response.status, 200)
         self.assertEqual(str(response.url), "https://httpbin.org")
         self.assertEqual(response.method, "get")
+        self.assertEqual(len(response.history), 1)
+        self.assertEqual(str(response.history[0].url), self.url)
+
+    @aioresponses()
+    async def test_post_redirect_followed_to_post(self, rsps):
+        rsps.post(
+            self.url,
+            status=307,
+            headers={"Location": "https://httpbin.org"},
+        )
+        rsps.post("https://httpbin.org")
+        response = await self.session.post(self.url, allow_redirects=True)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(str(response.url), "https://httpbin.org")
+        self.assertEqual(response.method, "post")
         self.assertEqual(len(response.history), 1)
         self.assertEqual(str(response.history[0].url), self.url)
 
