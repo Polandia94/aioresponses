@@ -6,6 +6,7 @@ import json
 from collections import namedtuple
 from collections.abc import Mapping
 from functools import wraps
+from http import HTTPStatus
 from typing import (
     Any,
     Callable,
@@ -27,7 +28,6 @@ from aiohttp import (
     ClientResponse,
     ClientSession,
     hdrs,
-    http,
     RequestInfo,
     typedefs
 )
@@ -108,9 +108,11 @@ class RequestMatch(object):
         self.repeat = repeat
         self.reason = reason
         if self.reason is None:
+            # aiohttp 4 dropped ``aiohttp.http.RESPONSES``; it was just the
+            # stdlib's status phrases, so read them from ``HTTPStatus``.
             try:
-                self.reason = http.RESPONSES[self.status][0]
-            except (IndexError, KeyError):
+                self.reason = HTTPStatus(self.status).phrase
+            except ValueError:
                 self.reason = ''
         self.callback = callback
 
