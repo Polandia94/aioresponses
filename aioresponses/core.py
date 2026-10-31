@@ -6,6 +6,7 @@ import json
 from collections import namedtuple
 from collections.abc import Mapping
 from functools import wraps
+from http import HTTPStatus
 from typing import (
     Any,
     Callable,
@@ -27,7 +28,6 @@ from aiohttp import (
     ClientResponse,
     ClientSession,
     hdrs,
-    http,
     RequestInfo,
     typedefs
 )
@@ -108,9 +108,11 @@ class RequestMatch(object):
         self.repeat = repeat
         self.reason = reason
         if self.reason is None:
+            # aiohttp 4 dropped ``aiohttp.http.RESPONSES``; it was just the
+            # stdlib's status phrases, so read them from ``HTTPStatus``.
             try:
-                self.reason = http.RESPONSES[self.status][0]
-            except (IndexError, KeyError):
+                self.reason = HTTPStatus(self.status).phrase
+            except ValueError:
                 self.reason = ''
         self.callback = callback
 
@@ -176,13 +178,27 @@ class RequestMatch(object):
         loop.get_debug = Mock()
         loop.get_debug.return_value = True
         kwargs: Dict[str, Any] = {}
-        kwargs['request_info'] = RequestInfo(
-            url=url,
-            method=method,
-            headers=CIMultiDictProxy(self._prepare_request_headers(request_headers)),
-            real_url=url
-        )
+        params = inspect.signature(response_class).parameters
+        prepared_headers = self._prepare_request_headers(request_headers)
+        if 'request_headers' in params:
+            # aiohttp 4 builds ``request_info`` lazily from these two
+            # arguments and rejects the old ``request_info`` one.
+            kwargs['request_headers'] = prepared_headers
+            kwargs['original_url'] = url
+        else:
+            kwargs['request_info'] = RequestInfo(
+                url=url,
+                method=method,
+                headers=CIMultiDictProxy(prepared_headers),
+                real_url=url
+            )
         kwargs['writer'] = None
+        # aiohttp 3.14 added a required keyword-only ``stream_writer`` argument
+        # to ``ClientResponse.__init__``. It is only consulted for its
+        # ``output_size`` attribute, so a lightweight mock is sufficient. The
+        # signature check keeps this a no-op on aiohttp < 3.14.
+        if 'stream_writer' in params:
+            kwargs['stream_writer'] = Mock(output_size=0)
         kwargs['continue100'] = None
         kwargs['timer'] = TimerNoop()
         kwargs['traces'] = []
